@@ -48,6 +48,8 @@ services:
     environment: *backend-common-env
     volumes:
       - backend_data:/app/backend/app/db
+      # 「存入历史资料」的文件落盘目录，跟数据库一样要跨容器重建持久化
+      - archive_data:/app/backend/app/data
     restart: unless-stopped
 
   celery-chat-worker:
@@ -126,3 +128,4 @@ services:
 volumes:
   redis_data:
   backend_data:
+  archive_data:

@@ -1,0 +1,84 @@
+# 比赛后端镜像：以 backend-src 为构建上下文（app/ 模块位于上下文根目录）
+FROM python:3.12-slim-bookworm
+
+WORKDIR /app/backend
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# 配置APT使用清华大学镜像源（与 git 仓库 Dockerfile.backend 保持一致）
+RUN rm -f /etc/apt/sources.list.d/* && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+    echo "deb https://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+    echo "Acquire::http::Pipeline-Depth \"0\";" > /etc/apt/apt.conf.d/99nopipelining
+
+# 安装系统依赖（Playwright 运行所需）
+RUN apt-get update --fix-missing \
+    && apt-get install -y --no-install-recommends \
+        g++ \
+        make \
+        netcat-openbsd \
+        curl \
+        wget \
+        ca-certificates \
+        libnss3 \
+        libnspr4 \
+        libatk1.0-0 \
+        libatk-bridge2.0-0 \
+        libxkbcommon0 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxrandr2 \
+        libgbm1 \
+        libgtk-3-0 \
+        libasound2 \
+        libpangocairo-1.0-0 \
+        libpango-1.0-0 \
+        libcairo2 \
+        libx11-xcb1 \
+        libxext6 \
+        libxfixes3 \
+        libxrender1 \
+        libxcursor1 \
+        libxi6 \
+        libxss1 \
+        libxshmfence1 \
+        libepoxy0 \
+        libwayland-client0 \
+        libwayland-egl1 \
+        libwayland-server0 \
+        libwayland-cursor0 \
+        libgdk-pixbuf-2.0-0 \
+        libjpeg62-turbo \
+        libxinerama1 \
+        fonts-liberation \
+        fonts-unifont \
+        fonts-noto-color-emoji \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制requirements文件并安装Python依赖（清华 PyPI 镜像）
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    --trusted-host pypi.tuna.tsinghua.edu.cn \
+    --default-timeout=600 \
+    --retries 5
+
+# 复制项目代码
+COPY ./app ./app
+
+# 安装Playwright浏览器（清华镜像下载，国内构建稳定性）
+ENV PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/playwright
+RUN python -m playwright install chromium
+RUN ls -la /root/.cache/ms-playwright/
+
+# 设置环境变量
+ENV PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
+
+# 暴露端口
+EXPOSE 8000
+
+# 启动命令
+CMD ["python", "-m", "app.main"]

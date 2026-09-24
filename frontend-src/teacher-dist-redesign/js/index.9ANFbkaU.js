@@ -1,0 +1,1 @@
+import{d as e,g as a,k as s,c as r,aD as t}from"./index.BgsYPlqD.js";import{_ as n}from"./_plugin-vue_export-helper.BCo6x5W8.js";const o={class:"course-management-wrap"},i=n(e({name:"CourseManagement",inheritAttrs:!1,__name:"index",setup:e=>(e,n)=>{const i=t("router-view");return r(),a("div",o,[s(i)])}}),[["__scopeId","data-v-38ecb9a2"]]);export{i as default};

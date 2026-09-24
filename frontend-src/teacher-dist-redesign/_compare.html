@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师端 UI 重构对比 · 原版 vs 重构版</title>
+  <style>
+    :root {
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --dur-fast: 180ms;
+      --dur-press: 140ms;
+      --hairline: rgba(15, 23, 42, 0.08);
+      --brand: #4080ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Inter', -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: #f6f7f9;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- 顶部控制条 ---- */
+    .bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      background: #fff;
+      border-bottom: 1px solid var(--hairline);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      flex-wrap: wrap;
+    }
+
+    .bar h1 {
+      font-size: 14px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .bar h1 span { color: #94a3b8; font-weight: 500; }
+
+    .segmented {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 10px;
+      background: #f1f3f6;
+    }
+
+    .segmented button {
+      padding: 7px 13px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: #64748b;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background-color var(--dur-fast) var(--ease-out),
+                  color var(--dur-fast) var(--ease-out),
+                  transform var(--dur-press) var(--ease-out);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .segmented button:hover { color: #0f172a; }
+    }
+
+    .segmented button:active { transform: scale(0.97); }
+
+    .segmented button[aria-selected="true"] {
+      background: #fff;
+      color: var(--brand);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .creds {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #64748b;
+      background: #ecf2ff;
+      border: 1px solid #d9e6ff;
+      border-radius: 8px;
+      padding: 6px 11px;
+      white-space: nowrap;
+    }
+
+    .creds b { color: #3366cc; font-weight: 650; }
+
+    .creds a {
+      color: var(--brand);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px solid currentColor;
+    }
+
+    /* 动效演示入口：静态截图看不出动效，单独开一页可重播的对照实验 */
+    .motion-link {
+      margin-left: auto;
+      font-size: 12.5px;
+      font-weight: 650;
+      color: var(--brand);
+      text-decoration: none;
+      padding: 7px 13px;
+      border: 1px solid rgba(64, 128, 255, 0.3);
+      border-radius: 8px;
+      white-space: nowrap;
+      transition: background-color var(--dur-fast) var(--ease-out),
+                  transform var(--dur-press) var(--ease-out);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .motion-link:hover { background: #ecf2ff; }
+    }
+
+    .motion-link:active { transform: scale(0.97); }
+
+    /* ---- 对比区 ---- */
+    .stage {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 16px 20px 24px;
+      min-height: 0;
+    }
+
+    .pane { display: flex; flex-direction: column; min-width: 0; }
+
+    .pane-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12.5px;
+      font-weight: 650;
+    }
+
+    .pane-label .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    .pane-label .tag {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .pane-before .dot { background: #94a3b8; }
+    .pane-before .tag { background: #f1f5f9; color: #64748b; }
+    .pane-after .dot { background: var(--brand); }
+    .pane-after .tag { background: #ecf2ff; color: var(--brand); }
+
+    .frame-wrap {
+      position: relative;
+      flex: 1;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--hairline);
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04),
+                  0 12px 28px -6px rgba(15, 23, 42, 0.1);
+    }
+
+    /* iframe 按桌面宽度渲染，再用 transform 整体缩放。
+       直接给窄宽度会触发响应式断点，看到的不是真实桌面布局。 */
+    .frame-wrap iframe {
+      width: 1280px;
+      height: 800px;
+      border: 0;
+      display: block;
+      transform-origin: top left;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    @media (max-width: 1100px) {
+      .stage { grid-template-columns: 1fr; }
+      .creds { margin-left: 0; }
+      .motion-link { margin-left: 0; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <h1>教师端 UI 重构对比 <span>· 原版 vs Emil 重构版</span></h1>
+    <div class="segmented" id="tabs" role="tablist">
+      <button role="tab" data-route="dashboard" aria-selected="true">首页</button>
+      <button role="tab" data-route="course-generator" aria-selected="false">课程生成</button>
+      <button role="tab" data-route="analysis" aria-selected="false">学情分析</button>
+      <button role="tab" data-route="course-management/list" aria-selected="false">课程列表</button>
+      <button role="tab" data-route="course-management/course/1" aria-selected="false">课程详情</button>
+    </div>
+    <a class="motion-link" href="/_motion.html">动效演示 →</a>
+    <div class="creds">
+      需先登录：
+      <b>uipreview / preview123</b>
+      <a href="http://127.0.0.1:8326/#/login" target="_blank" rel="noopener">去登录</a>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="pane pane-before">
+      <div class="pane-label">
+        <span class="dot"></span>原版 teacher-dist
+        <span class="tag">BEFORE</span>
+      </div>
+      <div class="frame-wrap"><iframe id="frame-before" title="原版"></iframe></div>
+    </div>
+    <div class="pane pane-after">
+      <div class="pane-label">
+        <span class="dot"></span>重构版 ui-theme.css
+        <span class="tag">AFTER</span>
+      </div>
+      <div class="frame-wrap"><iframe id="frame-after" title="重构版"></iframe></div>
+    </div>
+  </div>
+
+  <script>
+    var before = document.getElementById('frame-before');
+    var after = document.getElementById('frame-after');
+    var tabs = document.getElementById('tabs');
+
+    // 原版跑在 8326，重构版跑在 5600。两者同域（127.0.0.1），
+    // 会话 Cookie 按域匹配、不区分端口，所以登录一次两边都生效。
+    var ORIGIN_BEFORE = 'http://127.0.0.1:8326';
+    var ORIGIN_AFTER = 'http://127.0.0.1:5600';
+
+    function fit() {
+      var wraps = document.querySelectorAll('.frame-wrap');
+      var scale = wraps[0].clientWidth / 1280;
+      var height = wraps[0].clientHeight / scale;
+      document.querySelectorAll('.frame-wrap iframe').forEach(function (f) {
+        f.style.width = "1280px";
+        f.style.height = height + 'px';
+        f.style.transform = 'scale(' + scale + ')';
+      });
+    }
+
+    function load(route) {
+      before.src = ORIGIN_BEFORE + '/#/' + route;
+      after.src = ORIGIN_AFTER + '/#/' + route;
+    }
+
+    tabs.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-route]');
+      if (!btn) return;
+      tabs.querySelectorAll('button').forEach(function (b) {
+        b.setAttribute('aria-selected', String(b === btn));
+      });
+      load(btn.dataset.route);
+    });
+
+    window.addEventListener('resize', fit);
+
+    var initial = new URLSearchParams(location.search).get('route') || 'dashboard';
+    var initialBtn = tabs.querySelector('button[data-route="' + initial + '"]');
+    if (initialBtn) {
+      tabs.querySelectorAll('button').forEach(function (b) {
+        b.setAttribute('aria-selected', String(b === initialBtn));
+      });
+      load(initial);
+    } else {
+      load('dashboard');
+    }
+
+    fit();
+    setTimeout(fit, 100);
+  </script>
+</body>
+
+</html>
