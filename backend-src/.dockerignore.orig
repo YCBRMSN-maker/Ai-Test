@@ -1,0 +1,14 @@
+# 构建上下文排除项（backend-src 作为后端镜像 context 时）
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+scripts/
+tests/
+models/
+app/db/
+*.db
+*.db-journal
+celerybeat-schedule
+real_time_progress_analyzer.py
+start_all.sh
