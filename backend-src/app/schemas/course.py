@@ -70,21 +70,3 @@ class CourseContentSummary(BaseModel):
     sectionTests: List[Dict[str, Any]] = Field(default_factory=list)
     chapterTests: List[Dict[str, Any]] = Field(default_factory=list)
     scenes: Optional[Dict[str, Any]] = None  # OpenMAIC 式场景序列 {scenes: [...]}
-
-
-class CourseArchiveFileVO(BaseModel):
-    """手动存入的历史资料文件视图（课程资源管理页消费）。
-
-    fileName 原样返回用户上传时的名字（可含中文/空格）；
-    sizeBytes 单位字节，前端自行格式化。
-    """
-    id: int
-    courseId: int
-    courseCode: str = ""
-    courseName: str = ""
-    fileName: str
-    sizeBytes: int = 0
-    mimeType: Optional[str] = None
-    category: str = "doc"
-    notes: Optional[str] = None
-    createTime: Optional[str] = None

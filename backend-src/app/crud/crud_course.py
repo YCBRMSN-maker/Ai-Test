@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from app.models.course import Course, CourseContent, CourseArchiveFile
+from app.models.course import Course, CourseContent
 
 
 class CRUDCourse:
@@ -109,45 +109,5 @@ class CRUDCourseContent:
         return db_obj
 
 
-class CRUDCourseArchiveFile:
-    """course_archive_files 表操作（手动存入的历史资料文件元数据）。"""
-
-    def list_all(self, db: Session, course_id: Optional[int] = None) -> List[CourseArchiveFile]:
-        """归档文件列表，可选按课程过滤，新上传的在前。"""
-        q = db.query(CourseArchiveFile)
-        if course_id is not None:
-            q = q.filter(CourseArchiveFile.course_id == course_id)
-        return q.order_by(CourseArchiveFile.id.desc()).all()
-
-    def get_by_id(self, db: Session, file_id: int) -> Optional[CourseArchiveFile]:
-        """按主键取归档文件记录。"""
-        return db.query(CourseArchiveFile).filter(
-            CourseArchiveFile.id == file_id).first()
-
-    def create(self, db: Session, *, course_id: int, file_name: str,
-               stored_name: str, size_bytes: int, mime_type: Optional[str],
-               category: str, notes: Optional[str]) -> CourseArchiveFile:
-        """新入一条归档记录（文件本体由端点先落盘，这里只记元数据）。"""
-        db_obj = CourseArchiveFile(
-            course_id=course_id,
-            file_name=file_name,
-            stored_name=stored_name,
-            size_bytes=size_bytes,
-            mime_type=mime_type or None,
-            category=category,
-            notes=notes,
-        )
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
-
-    def delete(self, db: Session, row: CourseArchiveFile) -> None:
-        """删除一条归档记录（文件本体由端点负责从磁盘移除）。"""
-        db.delete(row)
-        db.commit()
-
-
 course = CRUDCourse()
 course_content = CRUDCourseContent()
-course_archive = CRUDCourseArchiveFile()

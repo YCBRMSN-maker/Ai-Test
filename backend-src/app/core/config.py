@@ -49,8 +49,6 @@ class Settings(BaseSettings):
     DATA_DIR: str = "./app/data"
     DOCUMENTS_DIR: str = "./app/data/documents"
     VECTOR_STORE_DIR: str = "./app/data/vector_store"
-    # 课程资源管理页「存入历史资料」的文件落盘目录（按课程分目录存放）
-    ARCHIVE_FILES_DIR: str = "./app/data/archive_files"
     KB_ANN_FILENAME: str = "kb.ann"
     KB_CHUNKS_FILENAME: str = "kb_chunks.json"
     

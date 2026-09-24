@@ -6,10 +6,7 @@ __pycache__/
 scripts/
 tests/
 models/
-# 本地修复：原为 app/db/，会连同 app/db/ 下的必需源码
-# （__init__.py / base_class.py / database.py / init_db.py）一起排除，
-# 导致镜像内 ModuleNotFoundError: No module named 'app.db.base_class'。
-# 数据库文件已由下方 *.db 规则排除，无需排除整个目录。
+app/db/
 *.db
 *.db-journal
 celerybeat-schedule

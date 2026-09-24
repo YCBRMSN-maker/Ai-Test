@@ -1,1 +1,0 @@
-import{d as a,g as e,az as s,aS as r,c as t}from"./index.BgsYPlqD.js";const p=a({__name:"index",setup(a){const p=s(),n=r(),{params:d,query:o}=p,{path:u}=d;return n.replace({path:"/"+u,query:o}),(a,s)=>(t(),e("div"))}});export{p as default};

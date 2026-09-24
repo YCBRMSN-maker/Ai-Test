@@ -42,7 +42,7 @@ from app.models.course_generation import (
     CourseGenerationEvent,
 )
 from app.models.user import User, UserSession
-from app.models.course import Course, CourseContent, CourseArchiveFile
+from app.models.course import Course, CourseContent
 
 def init_db():
     """初始化数据库，创建所有表"""

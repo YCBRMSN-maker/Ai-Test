@@ -58,21 +58,13 @@ RUN apt-get update --fix-missing \
         fonts-noto-color-emoji \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制requirements文件并安装Python依赖
-# ---- 本地安装优化（非上游改动，原始文件见 Dockerfile.orig）----
-# 1) 容器内无 GPU，代码为 torch.device('cuda' if torch.cuda.is_available() else 'cpu')，
-#    故先装 CPU 版 torch，避免拉取 14 个 nvidia-cuda-* 包（约 2.7GB）。
-# 2) 实测清华源仅 ~0.65MB/s、官方 PyPI ~5MB/s、download.pytorch.org ~9.7MB/s，故换源。
+# 复制requirements文件并安装Python依赖（清华 PyPI 镜像）
 COPY requirements.txt .
-RUN pip install --no-cache-dir torch==2.7.1 \
-        --index-url https://download.pytorch.org/whl/cpu \
-        --default-timeout=600 \
-        --retries 5 \
-    && pip install --no-cache-dir -r requirements.txt \
-        --index-url https://pypi.org/simple \
-        --extra-index-url https://mirrors.cloud.tencent.com/pypi/simple \
-        --default-timeout=600 \
-        --retries 5
+RUN pip install --no-cache-dir -r requirements.txt \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    --trusted-host pypi.tuna.tsinghua.edu.cn \
+    --default-timeout=600 \
+    --retries 5
 
 # 复制项目代码
 COPY ./app ./app

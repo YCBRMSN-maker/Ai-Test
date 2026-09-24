@@ -14,7 +14,7 @@ teacher-frontend/src/api/system/course-api.ts 与 course-content-api.ts：
 """
 from datetime import datetime
 import pytz
-from sqlalchemy import Column, Integer, BigInteger, String, DateTime, JSON, Text
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Text
 from app.db.base_class import Base
 
 
@@ -79,33 +79,3 @@ class CourseContent(Base):
     scenes = Column(JSON, nullable=True)
     create_time = Column(DateTime, default=_now, nullable=False)
     update_time = Column(DateTime, default=_now, onupdate=_now, nullable=False)
-
-
-class CourseArchiveFile(Base):
-    """课程资源管理页「存入历史资料」手动上传的归档文件。
-
-    与 course_content（课程生成器产出）并列的一条独立归档记录：
-    原始文件落盘（ARCHIVE_FILES_DIR/<course_id>/），这里只存元数据，
-    下载时按 stored_name 取回并以 file_name 作下载文件名。
-
-    Attributes:
-        course_id: 关联 courses.id（删除课程时不级联删文件，保留历史资料）
-        file_name: 用户上传时的原始文件名（含扩展名，可含中文）
-        stored_name: 落盘文件名（uuid 前缀防碰撞，扩展名保持不变）
-        size_bytes: 文件字节数（BigInteger，>2GB 的文件也不溢出）
-        mime_type: 浏览器上报的 MIME 类型（可能为空串，存 NULL）
-        category: 资料类型标签，取值同上传弹窗的 radio：slides/quiz/
-            code/interactive/md/doc（前端筛选胶囊按这个分桶）
-        notes: 归档备注（选填）
-    """
-    __tablename__ = "course_archive_files"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, index=True, nullable=False)
-    file_name = Column(String(255), nullable=False)
-    stored_name = Column(String(255), nullable=False)
-    size_bytes = Column(BigInteger, nullable=False, default=0)
-    mime_type = Column(String(255), nullable=True)
-    category = Column(String(32), nullable=False, default="doc")
-    notes = Column(Text, nullable=True)
-    create_time = Column(DateTime, default=_now, nullable=False)

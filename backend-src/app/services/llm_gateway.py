@@ -185,32 +185,6 @@ class LLMGateway:
         # 理论不可达：所有重试均失败后兜底返回
         return f"I apologize, but I encountered an error: {last_exc}"
 
-    async def get_completion(
-        self,
-        system_prompt: str,
-        messages: List[Dict[str, str]],
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None
-    ) -> str:
-        """
-        异步获取LLM完成结果。
-
-        本地修复：dynamic_controller.generate_adaptive_response 以
-        `await self.llm_gateway.get_completion(...)` 调用本方法，但 LLMGateway
-        原本只有 get_completion_sync，导致
-        AttributeError: 'LLMGateway' object has no attribute 'get_completion'
-        （所有 /api/v1/chat/ai/chat 请求都会返回 "critical error" 兜底文案）。
-        此处用 asyncio.to_thread 包装同步实现，复用其重试与 think 块过滤逻辑，
-        同时避免阻塞事件循环。
-        """
-        return await asyncio.to_thread(
-            self.get_completion_sync,
-            system_prompt,
-            messages,
-            max_tokens,
-            temperature,
-        )
-
     def get_stream_completion_sync(
         self, 
         system_prompt: str, 
