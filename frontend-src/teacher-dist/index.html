@@ -12,6 +12,23 @@
     <title>syncPBL教师端</title>
     <script type="module" crossorigin src="/js/index.BgsYPlqD.js"></script>
     <link rel="stylesheet" crossorigin href="/css/index.C63MCdFO.css">
+    <!-- UI 重构主题层：必须始终排在 Vite 动态注入的组件样式之后才能生效 -->
+    <link rel="stylesheet" href="/css/ui-theme.css" id="ui-theme-override" />
+    <script>
+      (function () {
+        var link = document.getElementById('ui-theme-override');
+        if (!link) return;
+        function keepLast() {
+          if (link.parentNode === document.head && document.head.lastElementChild !== link) {
+            document.head.appendChild(link);
+          }
+        }
+        new MutationObserver(keepLast).observe(document.head, { childList: true });
+        keepLast();
+      })();
+    </script>
+    <!-- 课程资源管理页样式。全部选择器都收在 .cr-scope 下，不外漏到应用的其它页面。 -->
+    <link rel="stylesheet" href="/css/course-resources.css" />
   </head>
 
   <body>
@@ -24,7 +41,23 @@
         </div>
       </div>
     </div>
-  </body>
+
+    <!-- 课程资源管理页 —— 运行时接入。
+         teacher-dist/ 是 Vite 构建产物，仓库里没有对应的 Vue 源码，
+         所以这个页面靠 course-resources-boot.js 在运行时接进去：
+         注册 #/course-resources 路由 + 往侧栏插一个菜单项。
+         （和 ui-theme.css 用 MutationObserver 打补丁是同一套思路。）
+
+         ⚠️ 顺序不能反：图标预加载脚本必须排在 web component 之前。
+         iconify-icon.min.js 在自身 IIFE 里同步读 window.IconifyPreload，
+         先加载组件再挂 preload 的话，它读到的永远是 undefined，
+         运行时就会回退去请求 api.iconify.design —— 页面看着正常，
+         内网/离线环境却会整片丢图标，只看截图发现不了。 -->
+    <script src="/js/vendor/iconify-icons-vault.js"></script>
+    <script src="/js/vendor/iconify-icon.min.js"></script>
+    <script src="/js/course-resources.js"></script>
+    <script src="/js/course-resources-boot.js"></script>
+  </body>
 
   <style>
     html,
